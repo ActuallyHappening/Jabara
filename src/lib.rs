@@ -83,9 +83,9 @@ mod variables {
 
 	#[cfg(test)]
 	mod test {
+		use super::*;
 		use proptest::prelude::*;
 		use static_assertions::assert_impl_all;
-		use super::*;
 
 		#[test]
 		fn var_macro() {
@@ -149,6 +149,21 @@ mod expr {
 	// 		&self.expr
 	// 	}
 	// }
+
+	macro_rules! expr {
+		($a:ident + $b:ident) => {
+			BinaryAddition::new($a, $b)
+		};
+		($a:ident + $b:expr) => {
+			BinaryAddition::new($a, $b)
+		};
+		// ($a:expr + $b:ident) => {
+		// 	BinaryAddition::new($a, $b)
+		// };
+		// ($a:expr + $b:expr) => {
+		// 	BinaryAddition::new($a, $b)
+		// };
+	}
 
 	pub use addition::*;
 	mod addition {
