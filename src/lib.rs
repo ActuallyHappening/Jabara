@@ -1,10 +1,10 @@
-pub enum RationalI32 {
-	Zero,
-	Integer(i32),
-	Fractional(FractionI32),
+pub mod prelude {
+	pub use crate::traits::*;
+	pub use crate::numbers::*;
+
+	pub(crate) use std::num::*;
 }
 
-pub struct FractionI32 {
-	numerator: i32,
-	denominator: i32,
-}
+pub mod traits;
+pub mod numbers;
+pub mod expressions;

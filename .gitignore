@@ -4,3 +4,4 @@
 !Cargo.lock
 !src
 !README.md
+!.rustfmt.toml
