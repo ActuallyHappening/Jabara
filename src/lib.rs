@@ -31,6 +31,19 @@ mod variables {
 		}
 	}
 
+	macro_rules! var {
+		($x:ident = $VarX:ident) => {
+			pub struct $VarX;
+			impl Variable for $VarX {
+				fn label(&self) -> &'static str {
+					stringify!($VarX)
+				}
+			}
+
+			let x = $VarX;
+		};
+	}
+
 	pub struct Variables<T> {
 		_t: PhantomData<T>,
 		map: HashMap<TypeId, Real>,
@@ -70,16 +83,33 @@ mod variables {
 
 	#[cfg(test)]
 	mod test {
-    use crate::prelude::{Variable, Variables};
+		use proptest::prelude::*;
+		use static_assertions::assert_impl_all;
+		use super::*;
 
 		#[test]
-		fn variables_typing() {
-			let empty: Variables<()> = Variables::empty();
+		fn var_macro() {
+			var!(x = VarX);
 
-			struct VarX;
-			impl Variable for VarX {}
+			assert_impl_all!(VarX: Variable);
+		}
 
-			let variables_with_x: Variables<VarX> = empty.insert(1.0);
+		proptest! {
+			#[test]
+			fn variables_typing(x: Real, y: Real) {
+				let empty: Variables<()> = Variables::empty();
+
+				struct VarX;
+				impl Variable for VarX {}
+
+				let variables_with_x: Variables<VarX> = empty.insert(x);
+				assert_eq!(variables_with_x.get(), x);
+
+				let empty2: Variables<()> = Variables::empty();
+				var!(y = VarY);
+				let variables_with_y: Variables<VarY> = empty2.insert(y);
+				assert_eq!(variables_with_y.get(), y);
+			}
 		}
 	}
 }
@@ -100,8 +130,6 @@ mod numbers {
 }
 
 mod expr {
-	use std::{marker::PhantomData, ops::Deref};
-
 	use crate::prelude::*;
 
 	/// TODO: add input and output variable sets for more advanced calculus
@@ -158,6 +186,12 @@ mod expr {
 			}
 		}
 
+		impl<VAR: Variable + 'static> Expression<VAR> for BinaryAddition<Real, VAR> {
+			fn evaluate(&self, variables: Variables<VAR>) -> Real {
+				self.lhs + variables.get()
+			}
+		}
+
 		#[cfg(test)]
 		mod tests {
 			use super::*;
@@ -181,6 +215,14 @@ mod expr {
 					let x = VarX;
 					let vars = Variables::empty().insert::<VarX>(a);
 					let expr = BinaryAddition::new(x, b);
+					assert_eq!(expr.evaluate(vars), a + b);
+
+					pub struct VarY;
+					impl Variable for VarY {}
+
+					let y = VarY;
+					let vars = Variables::empty().insert::<VarY>(b);
+					let expr = BinaryAddition::new(a, y);
 					assert_eq!(expr.evaluate(vars), a + b);
 				}
 			}
